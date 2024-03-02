@@ -1,0 +1,47 @@
+---
+- name: Установка веб-сервера с PHP и MySQL
+  hosts: localhost
+  become: true
+  tasks:
+
+    - name: Обновить список пакетов
+      apt:
+        update_cache: yes
+
+    - name: Установить Nginx, MySQL и PHP
+      apt:
+        name: "{{ item }}"
+        state: present
+      with_items:
+        - nginx
+        - mysql-server
+        - php
+        - php-mysql
+
+    - name: Запустить сервисы
+      systemd:
+        name: "{{ item }}"
+        state: started
+        enabled: yes
+      with_items:
+        - nginx
+        - mysql
+
+    - name: Создать индексный файл PHP
+      copy:
+        dest: /var/www/html/index.php
+        content: |
+          <?php
+          phpinfo();
+          ?>
+
+    - name: copy a file from local machine to local machine
+      copy:
+        src: files/default
+        dest:  /etc/nginx/sites-available/default
+
+    - name: Перезапустить Nginx
+      systemd:
+        name: nginx
+        state: restarted
+
